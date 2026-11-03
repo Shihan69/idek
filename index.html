@@ -1,0 +1,676 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Web Services Basics</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: one slide per screen, topic rail on top, deck controls along the bottom */
+  :root {
+    --bg: #edf0f3;
+    --surface: #f8fafb;
+    --ink: #0f1d2e;
+    --muted: #556473;
+    --line: #cbd3dc;
+    --accent: #b93c08;
+    --accent-ink: #ffffff;
+    --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b131c;
+      --surface: #121d29;
+      --ink: #e7edf3;
+      --muted: #93a1b0;
+      --line: #25364a;
+      --accent: #ff8a4c;
+      --accent-ink: #1a0b02;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b131c;
+    --surface: #121d29;
+    --ink: #e7edf3;
+    --muted: #93a1b0;
+    --line: #25364a;
+    --accent: #ff8a4c;
+    --accent-ink: #1a0b02;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .app { height: 100%; display: flex; flex-direction: column; min-width: 0; }
+
+  /* topic rail */
+  .rail { display: flex; align-items: center; gap: 12px; padding-block: 12px; border-bottom: 1px solid var(--line); }
+  .topics { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .topics::-webkit-scrollbar { display: none; }
+  .chip { white-space: nowrap; padding: 6px 12px; font-size: 0.8125rem; font-weight: 500; background: transparent; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; transition: background 0.25s, color 0.25s, border-color 0.25s; }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .fs { white-space: nowrap; padding: 6px 10px; font-size: 0.8125rem; color: var(--muted); background: transparent; border: 0; cursor: pointer; }
+  .fs:hover { color: var(--ink); }
+
+  /* stage and slides */
+  .stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+  .slide { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding-block: clamp(20px, 4vh, 44px); }
+  .wrap { max-width: 1100px; margin-inline: auto; display: grid; gap: clamp(16px, 3vh, 28px); min-width: 0; }
+
+  /* transition card that sweeps across the stage between slides */
+  .wipe { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 16px; text-align: center; background: var(--accent); color: var(--accent-ink); pointer-events: none; transform: translateX(-101%); }
+  .wipe .wn { font: 500 0.8125rem var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; }
+  .wipe .wt { font-family: var(--font-display); font-stretch: 115%; font-weight: 800; font-size: clamp(2rem, 7vw, 4.5rem); line-height: 1; text-wrap: balance; }
+
+  /* type */
+  .eyebrow { font: 500 0.75rem var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0; }
+  h1, h2 { font-family: var(--font-display); font-stretch: 115%; font-weight: 800; line-height: 1; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+  h1 { font-size: clamp(2.5rem, 8vw, 5.25rem); }
+  h2 { font-size: clamp(1.9rem, 5vw, 3.25rem); }
+  h3 { font: 600 1rem/1.3 var(--font-body); margin: 0 0 8px; }
+  p, li, dd { font-size: clamp(0.9375rem, 1.5vw, 1.0625rem); line-height: 1.55; }
+  p { margin: 0; }
+  .lede { font-size: clamp(1.0625rem, 2.1vw, 1.3125rem); line-height: 1.5; max-width: 60ch; margin: 0; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--font-mono); }
+
+  /* generic parts */
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: clamp(16px, 3vw, 36px); align-items: start; }
+  .col { min-width: 0; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: clamp(14px, 2vw, 22px); min-width: 0; }
+  .code { font: 400 0.875rem/1.65 var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; margin: 0; overflow-x: auto; white-space: pre; }
+  .code .ln { display: block; }
+  .code .k { color: var(--accent); }
+  .code .c { color: var(--muted); }
+  .scroll-x { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; }
+  th { text-align: left; font: 500 0.6875rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 8px 0; border-bottom: 2px solid var(--ink); }
+  td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-size: clamp(0.875rem, 1.4vw, 1rem); line-height: 1.45; }
+  td.m, td .m { font-family: var(--font-mono); font-size: 0.875rem; }
+  td.key { font-weight: 600; white-space: nowrap; }
+  td .go { background: none; border: 0; padding: 0; font-weight: 600; text-align: left; cursor: pointer; border-bottom: 1px solid var(--accent); }
+  td .go:hover { color: var(--accent); }
+
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  .steps li { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); counter-increment: s; }
+  .steps li::before { content: counter(s); display: grid; place-items: center; width: 1.5rem; height: 1.5rem; margin-top: 0.1em; border: 1px solid var(--line); border-radius: 50%; font: 500 0.75rem var(--font-mono); color: var(--accent); }
+
+  .plain { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+  .fact { border-left: 2px solid var(--line); padding-left: 12px; min-width: 0; }
+  .fact b { display: block; font: 600 1.125rem/1.3 var(--font-mono); font-variant-numeric: tabular-nums; }
+  .fact > span { color: var(--muted); font-size: 0.875rem; line-height: 1.4; display: block; }
+
+  /* title slide */
+  .agenda { border-top: 1px solid var(--line); }
+  .row { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; grid-template-areas: "n t a" ". d a"; column-gap: 12px; row-gap: 2px; align-items: baseline; width: 100%; padding: 14px 4px; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .row .n { grid-area: n; font: 500 0.8125rem var(--font-mono); color: var(--muted); }
+  .row .t { grid-area: t; font: 700 clamp(1.25rem, 3vw, 1.75rem)/1.2 var(--font-display); font-stretch: 112%; }
+  .row .d { grid-area: d; color: var(--muted); font-size: 0.9375rem; }
+  .row .a { grid-area: a; align-self: center; font-family: var(--font-mono); color: var(--accent); }
+  .row:hover .t { color: var(--accent); }
+  @media (min-width: 760px) {
+    .row { grid-template-columns: 2rem minmax(0, 20rem) minmax(0, 1fr) auto; grid-template-areas: "n t d a"; }
+  }
+
+  /* domain slide */
+  .url { font: 500 clamp(1.25rem, 5.2vw, 2.75rem)/1.2 var(--font-mono); margin: 0; overflow-wrap: anywhere; }
+  .url span { display: inline-block; }
+  .url .proto, .url .sub, .url .dot { color: var(--muted); }
+  .url .sld { color: var(--accent); font-weight: 600; padding-bottom: 2px; background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 3px no-repeat; }
+  .legend { margin: 0; }
+  .legend div { display: grid; grid-template-columns: minmax(5.5rem, 8.5rem) minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .legend dt { font: 500 0.875rem var(--font-mono); }
+  .legend dd { margin: 0; }
+
+  /* voip call path */
+  .wire { display: flex; align-items: center; gap: 12px; }
+  .wire .node { font: 500 0.75rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--ink); border-radius: 4px; padding: 6px 10px; white-space: nowrap; }
+  .wire .line { position: relative; flex: 1; min-width: 0; height: 2px; background: var(--line); }
+  .wire .line i { position: absolute; top: 50%; width: 10px; height: 10px; margin-top: -5px; background: var(--accent); }
+  .wire .line i:nth-child(1) { left: 12%; }
+  .wire .line i:nth-child(2) { left: 46%; }
+  .wire .line i:nth-child(3) { left: 80%; }
+
+  /* bottom bar */
+  .bar { display: flex; align-items: center; gap: 12px; padding-block: 10px; border-top: 1px solid var(--line); }
+  .btn { padding: 8px 14px; font-size: 0.875rem; font-weight: 600; background: transparent; border: 1px solid var(--ink); border-radius: 4px; cursor: pointer; white-space: nowrap; }
+  .btn.primary { background: var(--ink); color: var(--bg); }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn.primary:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .progress { flex: 1; min-width: 0; height: 3px; background: var(--line); }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); }
+  .count { font: 500 0.8125rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); min-width: 3.5rem; text-align: right; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* motion: only defined when the viewer has not asked for reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .progress i { transition: width 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+
+    .wipe.fwd { animation: wipe-fwd 0.7s cubic-bezier(0.65, 0, 0.35, 1) both; }
+    .wipe.back { animation: wipe-back 0.7s cubic-bezier(0.65, 0, 0.35, 1) both; }
+    @keyframes wipe-fwd {
+      0% { transform: translateX(-101%); }
+      38% { transform: translateX(0); }
+      62% { transform: translateX(0); }
+      100% { transform: translateX(101%); }
+    }
+    @keyframes wipe-back {
+      0% { transform: translateX(101%); }
+      38% { transform: translateX(0); }
+      62% { transform: translateX(0); }
+      100% { transform: translateX(-101%); }
+    }
+
+    /* everything on a slide builds in, top to bottom */
+    .slide.enter .unit { animation: build 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(160ms + var(--d, 0) * 60ms); }
+    .slide.enter h1.unit, .slide.enter h2.unit { animation: title-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(160ms + var(--d, 0) * 60ms); }
+    @keyframes build { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    @keyframes title-in {
+      from { clip-path: inset(-0.2em 100% -0.2em 0); transform: translateX(-14px); }
+      to { clip-path: inset(-0.2em 0 -0.2em 0); transform: none; }
+    }
+
+    /* address types itself out part by part */
+    .slide.enter .url span { animation: pop 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(560ms + var(--u, 0) * 130ms); }
+    .slide.enter .url .sld { animation: pop 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both, underline 0.6s ease both; animation-delay: calc(560ms + var(--u, 0) * 130ms), 1.25s; }
+    @keyframes pop { from { opacity: 0; transform: translateY(0.35em); } to { opacity: 1; transform: none; } }
+    @keyframes underline { from { background-size: 0 3px; } to { background-size: 100% 3px; } }
+
+    /* request and response appear line by line */
+    .slide.enter .code .ln { animation: line-in 0.4s ease both; animation-delay: calc(420ms + var(--d, 0) * 60ms + var(--k, 0) * 170ms); }
+    @keyframes line-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+
+    /* numbered steps light up one after another */
+    .slide.enter .steps li::before { animation: tick 0.5s ease both; animation-delay: calc(900ms + var(--k, 0) * 420ms); }
+    @keyframes tick {
+      0% { background: transparent; color: var(--accent); border-color: var(--line); transform: scale(1); }
+      50% { transform: scale(1.35); }
+      100% { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); transform: scale(1); }
+    }
+
+    /* packets travelling along the call path */
+    .wire .line i { animation: travel 1.8s linear infinite; }
+    .wire .line i:nth-child(2) { animation-delay: -0.6s; }
+    .wire .line i:nth-child(3) { animation-delay: -1.2s; }
+    @keyframes travel {
+      from { left: 0; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      to { left: calc(100% - 10px); opacity: 0; }
+    }
+  }
+</style>
+
+<div class="app">
+  <header class="rail">
+    <nav class="topics" aria-label="Topics">
+      <button class="chip" data-go="domain" data-topic="domain">Domain Name</button>
+      <button class="chip" data-go="server" data-topic="server">Web Server</button>
+      <button class="chip" data-go="hosting" data-topic="hosting">Web Hosting</button>
+      <button class="chip" data-go="voip" data-topic="voip">VoIP</button>
+      <button class="chip" data-go="addons" data-topic="addons">Add-ons &amp; Plug-ins</button>
+    </nav>
+    <button class="fs" id="fs" type="button" hidden>Fullscreen</button>
+  </header>
+
+  <main class="stage" id="stage">
+
+    <!-- 1 Title and contents -->
+    <section class="slide" id="s-title" data-id="title" data-label="Web Services Basics">
+      <div class="wrap">
+        <p class="eyebrow">Presentation</p>
+        <h1>Web Services Basics</h1>
+        <p class="lede">A short tour of the pieces behind a working website and a working phone line.</p>
+        <div class="agenda" data-noswipe>
+          <button class="row" data-go="domain"><span class="n">1</span><span class="t">Domain Name</span><span class="d">The readable address of a site, and how DNS finds it</span><span class="a">→</span></button>
+          <button class="row" data-go="server"><span class="n">2</span><span class="t">Web Server</span><span class="d">The software that answers each page request</span><span class="a">→</span></button>
+          <button class="row" data-go="hosting"><span class="n">3</span><span class="t">Web Hosting</span><span class="d">Where the server lives, and the four main plan types</span><span class="a">→</span></button>
+          <button class="row" data-go="voip"><span class="n">4</span><span class="t">VoIP</span><span class="d">Phone calls carried over the internet</span><span class="a">→</span></button>
+          <button class="row" data-go="addons"><span class="n">5</span><span class="t">Add-ons &amp; Plug-ins</span><span class="d">Extra features for browsers and websites</span><span class="a">→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 Domain name -->
+    <section class="slide" id="s-domain" data-id="domain" data-label="Domain Name" data-topic="domain" hidden>
+      <div class="wrap">
+        <p class="eyebrow">Domain Name</p>
+        <h2>The name people type instead of a number</h2>
+        <p class="lede">A domain name is the readable address of a website. It points to a server's IP address, so visitors never need to remember digits like 203.0.113.10.</p>
+        <p class="url" aria-label="Example address https://www.example.com"><span class="proto">https://</span><span class="sub">www</span><span class="dot">.</span><span class="sld">example</span><span class="dot">.</span><span class="tld">com</span></p>
+        <div class="cols">
+          <dl class="legend col">
+            <div><dt>https://</dt><dd>Protocol the browser uses to talk to the server.</dd></div>
+            <div><dt>www</dt><dd>Subdomain. You can add as many as you like, such as blog or shop.</dd></div>
+            <div><dt>example</dt><dd>Second-level domain. This is the name you register and pay for.</dd></div>
+            <div><dt>.com</dt><dd>Top-level domain (TLD). Others include .org, .net and country codes like .in or .uk.</dd></div>
+          </dl>
+          <div class="col panel">
+            <h3>Getting one</h3>
+            <ul class="plain">
+              <li>Search for the name at an ICANN-accredited registrar to see if it is free.</li>
+              <li>Register it for 1 to 10 years, then renew before it expires or it can be lost.</li>
+              <li>Switch on WHOIS privacy so your contact details are not public.</li>
+              <li>Point it at your host by editing its DNS records.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 DNS -->
+    <section class="slide" id="s-dns" data-id="dns" data-label="How DNS works" data-topic="domain" hidden>
+      <div class="wrap">
+        <p class="eyebrow">Domain Name · DNS</p>
+        <h2>How a name turns into an address</h2>
+        <div class="cols">
+          <ol class="steps col">
+            <li><span>The browser checks its own cache for www.example.com.</span></li>
+            <li><span>If it is not cached, the browser asks a recursive resolver, such as your ISP's or a public one like 8.8.8.8.</span></li>
+            <li><span>The resolver asks a root server, which points it to the servers for .com.</span></li>
+            <li><span>The .com servers point to the domain's own name servers, listed in its NS records.</span></li>
+            <li><span>Those name servers return the IP address. The resolver caches it for the record's TTL and passes it to the browser.</span></li>
+          </ol>
+          <div class="col" style="display:grid;gap:14px">
+            <div class="scroll-x" data-noswipe>
+              <table style="min-width:420px">
+                <thead><tr><th>Type</th><th>Name</th><th>Value</th></tr></thead>
+                <tbody>
+                  <tr><td class="m key">A</td><td class="m">example.com</td><td class="m">203.0.113.10</td></tr>
+                  <tr><td class="m key">AAAA</td><td class="m">example.com</td><td class="m">2001:db8::10</td></tr>
+                  <tr><td class="m key">CNAME</td><td class="m">www</td><td class="m">example.com</td></tr>
+                  <tr><td class="m key">MX</td><td class="m">example.com</td><td class="m">10 mail.example.com</td></tr>
+                  <tr><td class="m key">TXT</td><td class="m">example.com</td><td class="m">"v=spf1 …"</td></tr>
+                  <tr><td class="m key">NS</td><td class="m">example.com</td><td class="m">ns1.example.com</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="muted">A and AAAA give the IPv4 and IPv6 address. CNAME makes an alias. MX routes email. TXT holds text such as email-sender rules. NS names the servers in charge. A change can take as long as the old TTL to reach everyone.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 Web server -->
+    <section class="slide" id="s-server" data-id="server" data-label="Web Server" data-topic="server" hidden>
+      <div class="wrap">
+        <p class="eyebrow">Web Server</p>
+        <h2>The program that answers every page request</h2>
+        <p class="lede">A web server is software on a machine that is always online. It receives HTTP requests and sends back pages, images, or the output of an application.</p>
+        <div class="cols">
+          <div class="col" style="display:grid;gap:12px">
+            <pre class="code" data-noswipe><span class="ln"><span class="c"># browser asks</span></span><span class="ln"><span class="k">GET</span> /index.html HTTP/1.1</span><span class="ln">Host: www.example.com</span><span class="ln">&nbsp;</span><span class="ln"><span class="c"># server answers</span></span><span class="ln">HTTP/1.1 <span class="k">200 OK</span></span><span class="ln">Content-Type: text/html</span><span class="ln">&nbsp;</span><span class="ln">&lt;!doctype html&gt; …</span></pre>
+            <p class="muted">Static sites send files as they are. Dynamic sites pass the request to PHP, Node.js or Python, which builds the page first.</p>
+          </div>
+          <dl class="legend col">
+            <div><dt>Apache</dt><dd>Open-source and long established, configured per folder with .htaccess files.</dd></div>
+            <div><dt>Nginx</dt><dd>Event-driven. Common for static files and as a reverse proxy in front of apps.</dd></div>
+            <div><dt>IIS</dt><dd>Microsoft's server for Windows Server and ASP.NET sites.</dd></div>
+            <div><dt>LiteSpeed</dt><dd>Works with Apache settings and is common on shared hosting plans.</dd></div>
+          </dl>
+        </div>
+        <div class="facts">
+          <div class="fact"><b>Port 80</b><span>HTTP, unencrypted</span></div>
+          <div class="fact"><b>Port 443</b><span>HTTPS, encrypted with a TLS certificate</span></div>
+          <div class="fact"><b>200 · 301 · 404 · 500</b><span>OK, moved, not found, server error</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 Web hosting -->
+    <section class="slide" id="s-hosting" data-id="hosting" data-label="Web Hosting" data-topic="hosting" hidden>
+      <div class="wrap">
+        <p class="eyebrow">Web Hosting</p>
+        <h2>Where the server lives</h2>
+        <p class="lede">Web hosting means renting space and computing power on a server that stays connected to the internet, so your site can be reached at any hour.</p>
+        <div class="scroll-x" data-noswipe>
+          <table>
+            <thead><tr><th>Type</th><th>Who shares the machine</th><th>Control</th><th>Best for</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td class="key">Shared</td><td>Many sites on one server</td><td>Limited</td><td>Blogs and small business sites</td><td>Lowest</td></tr>
+              <tr><td class="key">VPS</td><td>A few virtual servers on one machine</td><td>Root access</td><td>Growing sites, custom software</td><td>Medium</td></tr>
+              <tr><td class="key">Dedicated</td><td>Nobody, the whole server is yours</td><td>Full</td><td>High traffic, strict compliance</td><td>Highest</td></tr>
+              <tr><td class="key">Cloud</td><td>Resources pooled across many machines</td><td>High, scales on demand</td><td>Traffic that spikes</td><td>Pay for use</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="cols">
+          <div class="col">
+            <h3>Compare before you buy</h3>
+            <ul class="plain">
+              <li>Uptime guarantee</li>
+              <li>Storage and bandwidth limits</li>
+              <li>Backups and a free SSL certificate</li>
+              <li>Support hours and response time</li>
+            </ul>
+          </div>
+          <div class="col facts">
+            <div class="fact"><b><span class="countup" data-to="99.9" data-dec="1">99.9</span>%</b><span>allows about 8 h 46 min of downtime a year</span></div>
+            <div class="fact"><b><span class="countup" data-to="99.99" data-dec="2">99.99</span>%</b><span>allows about 53 min of downtime a year</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 VoIP -->
+    <section class="slide" id="s-voip" data-id="voip" data-label="VoIP" data-topic="voip" hidden>
+      <div class="wrap">
+        <p class="eyebrow">VoIP</p>
+        <h2>Phone calls over the internet</h2>
+        <p class="lede">Voice over IP turns speech into data packets and sends them over the same networks that carry web pages, instead of over traditional phone lines.</p>
+        <div class="wire" aria-hidden="true"><span class="node">Caller</span><span class="line"><i></i><i></i><i></i></span><span class="node">Callee</span></div>
+        <div class="cols">
+          <ol class="steps col">
+            <li><span>The microphone captures your voice.</span></li>
+            <li><span>A codec digitizes and compresses it.</span></li>
+            <li><span>Packets cross the network. SIP sets up and ends the call, and RTP carries the audio.</span></li>
+            <li><span>The other device puts the packets back in order and plays the sound.</span></li>
+          </ol>
+          <div class="col" style="display:grid;gap:14px">
+            <div class="scroll-x" data-noswipe>
+              <table style="min-width:420px">
+                <tbody>
+                  <tr><td class="key">SIP port</td><td class="m">5060, or 5061 with TLS</td></tr>
+                  <tr><td class="key">Codecs</td><td class="m">G.711 64 kbps · G.729 8 kbps · Opus adaptive</td></tr>
+                  <tr><td class="key">Bandwidth</td><td class="m">about 80 to 100 kbps per G.711 call</td></tr>
+                  <tr><td class="key">Delay</td><td class="m">keep one-way under 150 ms</td></tr>
+                  <tr><td class="key">Address</td><td class="m">sip:alice@example.com</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="muted">SIP addresses reuse the domain name system, so the domain from slide 2 can also route calls.</p>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="col">
+            <h3>Ways to use it</h3>
+            <ul class="plain">
+              <li>A softphone app on a laptop or mobile</li>
+              <li>An IP desk phone</li>
+              <li>An adapter that connects an ordinary phone</li>
+              <li>A hosted cloud phone system with voicemail-to-email and an auto attendant</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>Limits to plan for</h3>
+            <ul class="plain">
+              <li>No internet or no power means no calls, so keep a backup line.</li>
+              <li>Jitter and packet loss make audio choppy.</li>
+              <li>Ask your provider how emergency calls find your location.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 Add-ons and plug-ins -->
+    <section class="slide" id="s-addons" data-id="addons" data-label="Add-ons &amp; Plug-ins" data-topic="addons" hidden>
+      <div class="wrap">
+        <p class="eyebrow">Add-ons &amp; Plug-ins</p>
+        <h2>Extra features without rebuilding the software</h2>
+        <p class="lede">An add-on extends a program that already exists. The words add-on, plug-in and extension overlap, and the one used usually depends on the host program.</p>
+        <div class="cols">
+          <div class="col panel">
+            <h3>In the browser</h3>
+            <ul class="plain">
+              <li>Called extensions in Chrome and Edge, add-ons in Firefox.</li>
+              <li>Common examples are ad blockers, password managers and grammar checkers.</li>
+              <li>Each one lists the permissions it asks for before you install it.</li>
+              <li>Old browser plug-ins like Flash are gone. Adobe ended Flash support on 31 December 2020.</li>
+            </ul>
+          </div>
+          <div class="col panel">
+            <h3>On a website</h3>
+            <ul class="plain">
+              <li>Content management systems such as WordPress add features through plug-ins.</li>
+              <li>Common jobs are SEO, contact forms, caching, backups and online shops like WooCommerce.</li>
+              <li>Themes change how a site looks. Plug-ins change what it does.</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <h3>Use them safely</h3>
+          <div class="facts">
+            <div class="fact"><b>Official sources</b><span>Install only from the browser's store or the CMS directory.</span></div>
+            <div class="fact"><b>Check the age</b><span>Look at the last update date and the reviews.</span></div>
+            <div class="fact"><b>Keep it lean</b><span>Delete what you do not use. Each plug-in adds code to load.</span></div>
+            <div class="fact"><b>Back up first</b><span>Take a backup before a large update.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 Recap -->
+    <section class="slide" id="s-recap" data-id="recap" data-label="Summary" hidden>
+      <div class="wrap">
+        <p class="eyebrow">Summary</p>
+        <h2>How the five fit together</h2>
+        <div class="scroll-x" data-noswipe>
+          <table>
+            <thead><tr><th>Piece</th><th>Question it answers</th><th>Short answer</th></tr></thead>
+            <tbody>
+              <tr><td class="key"><button class="go" data-go="domain">Domain Name</button></td><td>What do people type?</td><td>A readable address that DNS maps to an IP address.</td></tr>
+              <tr><td class="key"><button class="go" data-go="server">Web Server</button></td><td>Who answers the request?</td><td>Software that returns pages over HTTP or HTTPS.</td></tr>
+              <tr><td class="key"><button class="go" data-go="hosting">Web Hosting</button></td><td>Where does it run?</td><td>A rented server that stays online.</td></tr>
+              <tr><td class="key"><button class="go" data-go="voip">VoIP</button></td><td>How does a voice travel?</td><td>As IP packets, with SIP setting up the call.</td></tr>
+              <tr><td class="key"><button class="go" data-go="addons">Add-ons &amp; Plug-ins</button></td><td>What more can it do?</td><td>Small extensions for browsers and CMS sites.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="lede">A visitor types <span class="mono">example.com</span>. DNS returns the IP address. The web server at that address, running on your host, sends back the page.</p>
+        <div><button class="btn" data-go="title">Back to start</button></div>
+      </div>
+    </section>
+
+    <div class="wipe" id="wipe" aria-hidden="true"><span class="wn" id="wn"></span><span class="wt" id="wt"></span></div>
+  </main>
+
+  <footer class="bar">
+    <button class="btn" id="prev" type="button" aria-label="Previous slide">← Prev</button>
+    <div class="progress" role="progressbar" aria-label="Slide progress" aria-valuemin="1" aria-valuemax="8" aria-valuenow="1"><i id="pbar"></i></div>
+    <span class="count" id="count">1 / 8</span>
+    <button class="btn primary" id="next" type="button" aria-label="Next slide">Next →</button>
+  </footer>
+  <div class="sr" id="live" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  var order = ['title', 'domain', 'dns', 'server', 'hosting', 'voip', 'addons', 'recap'];
+  var slides = order.map(function (id) { return document.getElementById('s-' + id); });
+  var labels = slides.map(function (s) { return s.getAttribute('data-label'); });
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var prev = document.getElementById('prev');
+  var next = document.getElementById('next');
+  var count = document.getElementById('count');
+  var pbar = document.getElementById('pbar');
+  var live = document.getElementById('live');
+  var bar = document.querySelector('.progress');
+  var wipe = document.getElementById('wipe');
+  var wn = document.getElementById('wn');
+  var wt = document.getElementById('wt');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var target = 0;
+  var timer = null;
+
+  /* tag every piece of content so it can build in with its own delay */
+  slides.forEach(function (s) {
+    var idx = 0;
+    s.querySelectorAll('p:not(.url), h1, h2, h3, .legend > div, .steps > li, .agenda > .row, .facts > .fact, tbody > tr, .code, .plain > li, .btn, .wire').forEach(function (el) {
+      el.classList.add('unit');
+      el.style.setProperty('--d', String(Math.min(idx, 13)));
+      idx++;
+    });
+    s.querySelectorAll('.steps').forEach(function (ol) {
+      Array.prototype.forEach.call(ol.children, function (li, k) { li.style.setProperty('--k', String(k)); });
+    });
+    s.querySelectorAll('.code .ln').forEach(function (ln, k) { ln.style.setProperty('--k', String(k)); });
+    s.querySelectorAll('.url span').forEach(function (sp, k) { sp.style.setProperty('--u', String(k)); });
+  });
+
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+  function runCounts(s) {
+    s.querySelectorAll('.countup').forEach(function (el) {
+      var to = parseFloat(el.getAttribute('data-to'));
+      var dec = parseInt(el.getAttribute('data-dec') || '0', 10);
+      var t0 = null, delay = 500, dur = 1100;
+      if (el._raf) cancelAnimationFrame(el._raf);
+      el.textContent = (0).toFixed(dec);
+      function step(ts) {
+        if (t0 === null) t0 = ts;
+        var p = (ts - t0 - delay) / dur;
+        if (p <= 0) { el._raf = requestAnimationFrame(step); return; }
+        if (p > 1) p = 1;
+        var e = 1 - Math.pow(1 - p, 3);
+        el.textContent = (to * e).toFixed(dec);
+        if (p < 1) el._raf = requestAnimationFrame(step);
+      }
+      el._raf = requestAnimationFrame(step);
+    });
+  }
+
+  /* swap which slide is on screen */
+  function show(i, animate) {
+    slides.forEach(function (s, k) {
+      s.hidden = k !== i;
+      s.classList.remove('enter');
+    });
+    var s = slides[i];
+    s.scrollTop = 0;
+    if (animate) {
+      void s.offsetWidth;
+      s.classList.add('enter');
+      runCounts(s);
+    }
+  }
+
+  /* update the controls right away, before the slide itself swaps */
+  function ui(i) {
+    var topic = slides[i].getAttribute('data-topic');
+    chips.forEach(function (c) {
+      if (c.getAttribute('data-topic') === topic) c.setAttribute('aria-current', 'true');
+      else c.removeAttribute('aria-current');
+    });
+    var active = document.querySelector('.chip[aria-current="true"]');
+    if (active && active.scrollIntoView) {
+      try { active.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+    }
+    count.textContent = (i + 1) + ' / ' + order.length;
+    pbar.style.width = ((i + 1) / order.length * 100) + '%';
+    bar.setAttribute('aria-valuenow', String(i + 1));
+    prev.disabled = i === 0;
+    next.disabled = i === order.length - 1;
+    live.textContent = 'Slide ' + (i + 1) + ' of ' + order.length + ': ' + labels[i];
+  }
+
+  function go(i) {
+    if (i < 0) i = 0;
+    if (i > order.length - 1) i = order.length - 1;
+    if (i === target) return;
+    var dir = i > target ? 'fwd' : 'back';
+    target = i;
+    ui(i);
+    try { if (location.hash.slice(1) !== order[i]) location.hash = order[i]; } catch (e) {}
+    wn.textContent = pad(i + 1) + ' / ' + pad(order.length);
+    wt.textContent = labels[i];
+    if (reduce.matches) {
+      if (timer) { clearTimeout(timer); timer = null; }
+      show(i, false);
+      return;
+    }
+    if (timer) return; /* a sweep is already covering the stage; it will land on the latest target */
+    wipe.classList.remove('fwd', 'back');
+    void wipe.offsetWidth;
+    wipe.classList.add(dir);
+    timer = setTimeout(function () {
+      timer = null;
+      show(target, true);
+    }, 270);
+  }
+
+  wipe.addEventListener('animationend', function () { wipe.classList.remove('fwd', 'back'); });
+
+  function fromHash() {
+    var i = order.indexOf(location.hash.slice(1));
+    return i >= 0 ? i : 0;
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('[data-go]') : null;
+    if (!t) return;
+    var i = order.indexOf(t.getAttribute('data-go'));
+    if (i >= 0) go(i);
+  });
+  prev.addEventListener('click', function () { go(target - 1); });
+  next.addEventListener('click', function () { go(target + 1); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.key === 'ArrowRight') { go(target + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { go(target - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { go(0); e.preventDefault(); }
+    else if (e.key === 'End') { go(order.length - 1); e.preventDefault(); }
+    else if (e.key === ' ' && tag !== 'BUTTON') { go(target + (e.shiftKey ? -1 : 1)); e.preventDefault(); }
+  });
+
+  var sx = 0, sy = 0, track = false;
+  var stage = document.getElementById('stage');
+  stage.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1 || (e.target.closest && e.target.closest('[data-noswipe]'))) { track = false; return; }
+    track = true;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+  }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    if (!track) return;
+    track = false;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) go(target + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  window.addEventListener('hashchange', function () {
+    var i = fromHash();
+    if (i !== target) go(i);
+  });
+
+  var fs = document.getElementById('fs');
+  if (document.fullscreenEnabled) {
+    fs.hidden = false;
+    fs.addEventListener('click', function () {
+      var p;
+      try {
+        p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+        if (p && p.catch) p.catch(function () {});
+      } catch (e) {}
+    });
+    document.addEventListener('fullscreenchange', function () {
+      fs.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+    });
+  }
+
+  /* first load: show the slide as-is so the page is complete at rest */
+  target = fromHash();
+  ui(target);
+  show(target, false);
+})();
+</script>
+
+</body></html>
